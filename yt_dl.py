@@ -205,7 +205,7 @@ if IsValidYtUrl(url):
             with st.spinner("正在處理並裁切音訊..."):
                 file = DownloadMp3(url)
             st.success(
-                f"已獲取 : {name} {st.session_state['time_st']} ~ {st.session_state['time_ed']}"
+                f"已獲取 : {name}\n{st.session_state['time_st']} ~ {st.session_state['time_ed']}"
             )
             st.download_button(
                 label="下載 MP3", data=file, file_name=name, mime="audio/mpeg"
