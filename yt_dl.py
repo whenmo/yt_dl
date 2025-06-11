@@ -185,7 +185,7 @@ if IsValidYtUrl(url):
     st.select_slider(
         "調整時間(s)",
         options=range(0, time + 1),
-        value=st.session_state["slider_range"],
+        value=val,
         key="slider_range",
         on_change=UpdateTextFromSlider,
     )
