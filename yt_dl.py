@@ -191,15 +191,24 @@ if IsValidYtUrl(url):
     )
 
     # 下載
-    if st.button("下載 MP3"):
+    if st.button("獲取 MP3"):
         dl_path = Path.home() / "Downloads/yt_dl"
         os.makedirs(dl_path, exist_ok=True)
         try:
             filename, name = DownloadMp3(dl_path, info, url)
             CutVideo(f"{dl_path}/{name}.mp3")
             with open(filename, "rb") as f:
-                st.success(f"已下載至：\n{dl_path}/{name}.mp3")
+                st.success(
+                    f"已獲取 : {st.session_state['time_st']} ~ {st.session_state['time_ed']}"
+                )
+                st.download_button(
+                    label="下載 MP3",
+                    data=f,
+                    file_name=os.path.basename(filename),
+                    mime="audio/mpeg",
+                )
+
         except Exception as e:
-            st.error(f"下載失敗：{e}")
+            st.error(f"獲取失敗：{e}")
 else:
     st.write("非有效 youtube 網址")
