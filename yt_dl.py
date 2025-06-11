@@ -207,6 +207,8 @@ if IsValidYtUrl(url):
             st.success(
                 f"已獲取 : {name}\n{st.session_state['time_st']} ~ {st.session_state['time_ed']}"
             )
+            st.success("已獲取 :")
+            st.markdown(f"**{name}**  \n{st.session_state['time_st']} ~ {st.session_state['time_ed']}")
             st.download_button(
                 label="下載 MP3", data=file, file_name=f"{name}.mp3", mime="audio/mpeg"
             )
