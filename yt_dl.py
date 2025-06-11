@@ -173,6 +173,9 @@ if IsValidYtUrl(url):
     img = Image.open(BytesIO(data))
     st.image(img, caption=info.get("title"), use_container_width=True)
 
+    # 設定標題
+    name = st.text_input("影片標題", value=info.get("title", "audio"))
+
     # 調整秒數
     time = info.get("duration")
 
