@@ -1,6 +1,5 @@
 import streamlit as st
 import yt_dlp
-from pathlib import Path
 from urllib.request import urlopen
 from urllib.parse import urlparse, parse_qs
 from io import BytesIO
