@@ -99,29 +99,22 @@ def UpdateTextFromSlider():
 def SanitizeFilename(title: str, id: str) -> str:
     # 移除非法字元，Windows 不允許 \ / : * ? " < > |
     sanitized = re.sub(r'[\\/:*?"<>|]', "_", title)
-
     # 移除控制字元和其他不可見字元
     sanitized = re.sub(r"[\x00-\x1f\x7f]", "", sanitized)
-
     # 過長字串截斷
     if len(sanitized) > 100:
         sanitized = sanitized[:100]
-
     # 移除前後空白
     sanitized = sanitized.strip()
-
     # 如果結果是空字串，改用 id
     return sanitized if sanitized else id
 
 
-def DownloadMp3(dl_path: str, info: dict, url: str):
-    name = SanitizeFilename(info.get("title", ""), info.get("id"))
-
+def DownloadMp3(url: str):
     ydl_opts = {
         "quiet": True,
         "format": "bestaudio/best",
-        "outtmpl": str(dl_path / f"{name}.%(ext)s"),
-        # "ffmpeg_location": "ffmpeg.exe",
+        "outtmpl": "%(title)s.%(ext)s",
         "postprocessors": [
             {
                 "key": "FFmpegExtractAudio",
@@ -131,27 +124,42 @@ def DownloadMp3(dl_path: str, info: dict, url: str):
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=True)
-        filename = ydl.prepare_filename(info)
-        filename = os.path.splitext(filename)[0] + ".mp3"
-        return filename, name
+        title = info.get("title", "audio")
+        downloaded_filename = ydl.prepare_filename(info)
+        downloaded_mp3 = os.path.splitext(downloaded_filename)[0] + ".mp3"
 
+    input_path = "temp.mp3"
+    output_path = "trimmed.mp3"
+    os.rename(downloaded_mp3, input_path)
 
-def CutVideo(path: str):
-    temp_path = path + ".temp.mp3"
-    cmd = [
-        "ffmpeg",
-        "-i",
-        path,
-        "-ss",
-        st.session_state["time_st"],
-        "-to",
-        st.session_state["time_ed"],
-        "-c",
-        "copy",  # 不重新編碼，快速且不失真
-        temp_path,
-    ]
-    subprocess.run(cmd, check=True)
-    os.replace(temp_path, path)
+    # 使用 ffmpeg 裁切
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-y",
+            "-i",
+            input_path,
+            "-ss",
+            st.session_state["time_st"],
+            "-to",
+            st.session_state["time_ed"],
+            "-acodec",
+            "copy",
+            output_path,
+        ],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+    # 讀入裁切後的 mp3
+    with open(output_path, "rb") as f:
+        mp3_bytes = BytesIO(f.read())
+
+    # 清理暫存檔
+    os.remove(input_path)
+    os.remove(output_path)
+
+    return mp3_bytes, f"{title}_cut.mp3"
 
 
 # streamlit 網頁
@@ -192,22 +200,15 @@ if IsValidYtUrl(url):
 
     # 下載
     if st.button("獲取 MP3"):
-        dl_path = Path.home() / "Downloads/yt_dl"
-        os.makedirs(dl_path, exist_ok=True)
         try:
-            filename, name = DownloadMp3(dl_path, info, url)
-            CutVideo(f"{dl_path}/{name}.mp3")
-            with open(filename, "rb") as f:
-                st.success(
-                    f"已獲取 : {st.session_state['time_st']} ~ {st.session_state['time_ed']}"
-                )
-                st.download_button(
-                    label="下載 MP3",
-                    data=f,
-                    file_name=os.path.basename(filename),
-                    mime="audio/mpeg",
-                )
-
+            with st.spinner("正在處理並裁切音訊..."):
+                file, name = DownloadMp3(url)
+            st.success(
+                f"已獲取 : {st.session_state['time_st']} ~ {st.session_state['time_ed']}"
+            )
+            st.download_button(
+                label="下載 MP3", data=file, file_name=name, mime="audio/mpeg"
+            )
         except Exception as e:
             st.error(f"獲取失敗：{e}")
 else:
