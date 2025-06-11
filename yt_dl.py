@@ -11,7 +11,6 @@ import subprocess
 
 # streamlit run yt_dl.py
 
-
 # 檢查 url
 def IsValidYtUrl(url: str) -> bool:
     try:
@@ -124,7 +123,6 @@ def DownloadMp3(url: str):
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=True)
-        title = info.get("title", "audio")
         downloaded_filename = ydl.prepare_filename(info)
         downloaded_mp3 = os.path.splitext(downloaded_filename)[0] + ".mp3"
 
@@ -159,7 +157,7 @@ def DownloadMp3(url: str):
     os.remove(input_path)
     os.remove(output_path)
 
-    return mp3_bytes, f"{title}_cut.mp3"
+    return mp3_bytes
 
 
 # streamlit 網頁
@@ -205,7 +203,7 @@ if IsValidYtUrl(url):
     if st.button("獲取 MP3"):
         try:
             with st.spinner("正在處理並裁切音訊..."):
-                file, name = DownloadMp3(url)
+                file = DownloadMp3(url)
             st.success(
                 f"已獲取 : {name} {st.session_state['time_st']} ~ {st.session_state['time_ed']}"
             )
